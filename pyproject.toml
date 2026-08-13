@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "meddeid-language-nl"
+version = "0.1.0"
+description = "Dutch language and nl-BE locale profiles for MedDeID"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "AGPL-3.0-only"
+authors = [{name = "Stig Hellemans"}]
+keywords = ["de-identification", "clinical-nlp", "dutch", "belgium"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Natural Language :: Dutch",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+dependencies = ["meddeid-core>=0.1,<0.2"]
+
+[project.urls]
+"MedDeID on Hugging Face" = "https://huggingface.co/collections/stighellemans/meddeid"
+
+[project.entry-points."meddeid.language_profiles"]
+nl = "meddeid_language_nl.profiles:get_profile"
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+meddeid_language_nl = ["resources/lookup/*.txt", "resources/lookup/*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
