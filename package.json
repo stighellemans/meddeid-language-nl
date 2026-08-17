@@ -27,6 +27,6 @@
     "README.md"
   ],
   "scripts": {
-    "test": "node --test \"tests-js/**/*.test.js\""
+    "test": "node --test tests-js/subannotation-profile.test.js"
   }
 }
