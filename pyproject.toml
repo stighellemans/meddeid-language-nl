@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "meddeid-language-nl"
-version = "0.1.0"
+version = "0.1.1"
 description = "Dutch language and nl-BE locale profiles for MedDeID"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -21,8 +21,8 @@ classifiers = [
 dependencies = ["meddeid-core>=0.1,<0.2"]
 
 [project.urls]
-Homepage = "https://meddeid.github.io/"
-Documentation = "https://meddeid.github.io/concepts/architecture/"
+Homepage = "https://stighellemans.github.io/meddeid.github.io/"
+Documentation = "https://stighellemans.github.io/meddeid.github.io/concepts/architecture/"
 Source = "https://github.com/stighellemans/meddeid-language-nl"
 Issues = "https://github.com/stighellemans/meddeid-language-nl/issues"
 "MedDeID on Hugging Face" = "https://huggingface.co/collections/stighellemans/meddeid"

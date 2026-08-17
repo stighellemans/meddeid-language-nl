@@ -48,7 +48,7 @@ def lookup_values(category: str) -> tuple[str, ...]:
 
 
 def lookup_source() -> str:
-    return "meddeid-language-nl 0.1.0 nl-BE lookup resources"
+    return "meddeid-language-nl 0.1.1 nl-BE lookup resources"
 
 
 @lru_cache(maxsize=1)
@@ -68,7 +68,7 @@ def lookup_manifest() -> dict:
     return {
         "manifest_version": "meddeid.language-resources.v1",
         "package": "meddeid-language-nl",
-        "package_version": "0.1.0",
+        "package_version": "0.1.1",
         "profile_id": "nl-BE",
         "profile_version": "1",
         "resources": resources,

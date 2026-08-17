@@ -4,7 +4,7 @@ Dutch language support for MedDeID. The package provides Dutch parsing and
 rendering rules, the Belgian-Dutch `nl-BE` post-processing profile, and
 versioned Belgian lookup resources used by generation and stability testing.
 
-See the [suite architecture](https://meddeid.github.io/concepts/architecture/)
+See the [suite architecture](https://stighellemans.github.io/meddeid.github.io/concepts/architecture/)
 for how language profiles fit into inference, generation, and evaluation. This
 repository is authoritative for Dutch behavior and lookup-resource provenance.
 
