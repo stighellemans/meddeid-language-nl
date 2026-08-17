@@ -33,6 +33,39 @@ The package registers its profile provider in the
 can implement the same provider interface without changing the inference
 package.
 
+## Subannotation capability
+
+The same repository also contains the optional JavaScript capability
+`@meddeid/language-nl/subannotation`. It supplies `nl-BE@1` semantic
+subannotation rules, category presentation, formatting policy, and a hashed
+resource manifest. `meddeid-subannotate` dynamically resolves this capability;
+the application itself remains language-neutral.
+
+The npm package has not been published yet. From a suite source checkout:
+
+```bash
+cd ../meddeid-subannotate
+npm install --no-save ../meddeid-language-nl
+npm run profile -- set nl-BE@1
+npm run dev
+```
+
+After npm publication, `npm install @meddeid/language-nl` replaces the local
+install command. The package registers `nl-BE@1` through
+`package.json#meddeid.subannotationProfiles`, so the application does not need
+a Dutch-specific resolver branch or a module-path environment variable.
+
+Capability developers can skip installation and persist a direct source path:
+
+```bash
+npm run profile -- set nl-BE@1 \
+  --module ../meddeid-language-nl/js/subannotation-profile.js
+```
+
+The Python and JavaScript packages consume the same files under
+`src/meddeid_language_nl/resources/lookup`, so name, street, locality, postal,
+and healthcare resources have one authoritative copy and provenance record.
+
 `meddeid-language-nl` is not a recognizer or model and does not include Belgian
 DEDUCE. DEDUCE remains an independently licensed comparison system.
 

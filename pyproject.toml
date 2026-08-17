@@ -21,6 +21,10 @@ classifiers = [
 dependencies = ["meddeid-core>=0.1,<0.2"]
 
 [project.urls]
+Homepage = "https://meddeid.github.io/"
+Documentation = "https://meddeid.github.io/concepts/architecture/"
+Source = "https://github.com/stighellemans/meddeid-language-nl"
+Issues = "https://github.com/stighellemans/meddeid-language-nl/issues"
 "MedDeID on Hugging Face" = "https://huggingface.co/collections/stighellemans/meddeid"
 
 [project.entry-points."meddeid.language_profiles"]
@@ -33,7 +37,11 @@ dev = ["pytest>=8"]
 where = ["src"]
 
 [tool.setuptools.package-data]
-meddeid_language_nl = ["resources/lookup/*.txt", "resources/lookup/*.md"]
+meddeid_language_nl = [
+    "resources/lookup/*.txt",
+    "resources/lookup/*.md",
+    "resources/subannotation/*.json",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from meddeid_core.language import LanguageProfile
 
+from .capabilities import capability_manifest
 from .lookups import lookup_categories, lookup_manifest, lookup_values
 from .postprocess import post_process_spans
 
@@ -16,6 +17,7 @@ NL_BE = LanguageProfile(
     lookup_categories_provider=lookup_categories,
     lookup_values_provider=lookup_values,
     resource_manifest_provider=lookup_manifest,
+    capability_manifest_provider=capability_manifest,
 )
 
 _PROFILES = {(NL_BE.profile_id.lower(), NL_BE.version): NL_BE}

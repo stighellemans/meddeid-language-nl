@@ -25,6 +25,10 @@ def test_profile_manifest_pins_every_resource_hash() -> None:
     assert manifest["profile_id"] == "nl-BE"
     assert manifest["profile_version"] == "1"
     assert manifest["resources"] == lookup_manifest()
+    capability = manifest["capabilities"]["subannotation"]
+    assert capability["profile_id"] == "nl-BE"
+    assert capability["ruleset_id"] == "core-pii-nl-be"
+    assert len(capability["profile_manifest_sha256"]) == 64
     assert profile.lookup_values("first_names") == lookup_values("first_names")
     assert all(
         len(resource["sha256"]) == 64 and resource["values"] > 0

@@ -1,0 +1,32 @@
+{
+  "name": "@meddeid/language-nl",
+  "version": "0.1.0",
+  "description": "Dutch and nl-BE language-profile capabilities for MedDeID",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    "./subannotation": "./js/subannotation-profile.js"
+  },
+  "meddeid": {
+    "subannotationProfiles": [
+      {
+        "selection": "nl-BE@1",
+        "module": "@meddeid/language-nl/subannotation"
+      }
+    ]
+  },
+  "files": [
+    "js/",
+    "src/meddeid_language_nl/resources/lookup/",
+    "src/meddeid_language_nl/resources/subannotation/",
+    "LICENSE",
+    "NOTICE",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test \"tests-js/**/*.test.js\""
+  }
+}

@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: python -m pip install 'meddeid-core @ git+https://github.com/stighellemans/meddeid-core.git@9b51c5b93aadfd9f59014e136a3f72ff38f7ad55'
+      - run: python -m pip install '.[dev]' build twine
+      - run: python -m pip check
+      - run: pytest -q
+      - name: Build and inspect distributions
+        if: matrix.python-version == '3.12'
+        run: |
+          python -m build
+          python -m twine check dist/*
+
+  javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm test
+      - run: npm pack --dry-run
