@@ -1,0 +1,36 @@
+name: Publish JavaScript package
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["npm-v*"]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          registry-url: https://registry.npmjs.org
+      - name: Verify tag and package
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          npm test
+          npm pack --dry-run
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            node -e '
+              const version = require("./package.json").version;
+              const tag = process.env.RELEASE_TAG.replace(/^npm-v/, "");
+              if (tag !== version) throw new Error(`tag ${tag} does not match ${version}`);
+            '
+          fi
+      - name: Publish with provenance
+        run: npm publish --access public --provenance

@@ -3,6 +3,25 @@
   "version": "0.1.0",
   "description": "Dutch and nl-BE language-profile capabilities for MedDeID",
   "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stighellemans/meddeid-language-nl.git"
+  },
+  "homepage": "https://stighellemans.github.io/meddeid.github.io/concepts/architecture/",
+  "bugs": {
+    "url": "https://github.com/stighellemans/meddeid-language-nl/issues"
+  },
+  "keywords": [
+    "de-identification",
+    "clinical-nlp",
+    "dutch",
+    "belgium",
+    "meddeid"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -27,6 +46,7 @@
     "README.md"
   ],
   "scripts": {
-    "test": "node --test tests-js/subannotation-profile.test.js"
+    "test": "node --test tests-js/subannotation-profile.test.js",
+    "prepublishOnly": "npm test"
   }
 }

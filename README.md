@@ -41,17 +41,16 @@ subannotation rules, category presentation, formatting policy, and a hashed
 resource manifest. `meddeid-subannotate` dynamically resolves this capability;
 the application itself remains language-neutral.
 
-The npm package has not been published yet. From a suite source checkout:
+Install the published JavaScript capability from npm and select it in a
+`meddeid-subannotate` workspace:
 
 ```bash
-cd ../meddeid-subannotate
-npm install --no-save ../meddeid-language-nl
+npm install --no-save @meddeid/language-nl@0.1.0
 npm run profile -- set nl-BE@1
 npm run dev
 ```
 
-After npm publication, `npm install @meddeid/language-nl` replaces the local
-install command. The package registers `nl-BE@1` through
+The package registers `nl-BE@1` through
 `package.json#meddeid.subannotationProfiles`, so the application does not need
 a Dutch-specific resolver branch or a module-path environment variable.
 
