@@ -19,6 +19,8 @@ jobs:
         with:
           node-version: "22"
           registry-url: https://registry.npmjs.org
+      - name: Install npm with trusted-publishing support
+        run: npm install --global npm@^11.5.1
       - name: Verify tag and package
         env:
           RELEASE_TAG: ${{ github.ref_name }}
