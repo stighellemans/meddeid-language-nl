@@ -1,36 +1,36 @@
-"""Versioned language-profile contract used by model bundles and data tools."""
+"""Dutch language-profile registrations for Belgium and the Netherlands."""
 
 from __future__ import annotations
+
+from functools import partial
 
 from meddeid_core.language import LanguageProfile
 
 from .capabilities import capability_manifest
+from .date_pseudonyms import birth_date_variants, date_replacement
+from .identity import PROFILE_IDS, normalize_profile_id
 from .lookups import lookup_categories, lookup_manifest, lookup_values
 from .postprocess import post_process_spans
 
 
-NL_BE = LanguageProfile(
-    profile_id="nl-BE",
-    version="1",
-    language_tags=("nl", "nl-BE"),
-    post_process_spans=post_process_spans,
-    lookup_categories_provider=lookup_categories,
-    lookup_values_provider=lookup_values,
-    resource_manifest_provider=lookup_manifest,
-    capability_manifest_provider=capability_manifest,
-)
+def _profile(profile_id: str) -> LanguageProfile:
+    return LanguageProfile(
+        profile_id=profile_id,
+        language_tags=(profile_id,),
+        post_process_spans=post_process_spans,
+        lookup_categories_provider=partial(lookup_categories, profile_id),
+        lookup_values_provider=partial(lookup_values, profile_id),
+        resource_manifest_provider=partial(lookup_manifest, profile_id),
+        capability_manifest_provider=partial(capability_manifest, profile_id),
+        date_replacement_provider=date_replacement,
+        birth_date_variants_provider=birth_date_variants,
+    )
 
-_PROFILES = {(NL_BE.profile_id.lower(), NL_BE.version): NL_BE}
+
+NL_BE = _profile("nl-BE")
+NL_NL = _profile("nl-NL")
+_PROFILES = {profile.profile_id.lower(): profile for profile in (NL_BE, NL_NL)}
 
 
-def get_profile(profile_id: str, *, version: str) -> LanguageProfile:
-    try:
-        return _PROFILES[(profile_id.strip().lower(), str(version))]
-    except KeyError as exc:
-        available = ", ".join(
-            f"{profile.profile_id}@{profile.version}" for profile in _PROFILES.values()
-        )
-        raise ValueError(
-            f"unsupported Dutch language profile {profile_id!r}@{version}; "
-            f"available: {available}"
-        ) from exc
+def get_profile(profile_id: str) -> LanguageProfile:
+    return _PROFILES[normalize_profile_id(profile_id).lower()]

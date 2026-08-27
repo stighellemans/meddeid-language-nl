@@ -1,0 +1,46 @@
+{
+  "contractVersion": "meddeid.subannotation-profile.v1",
+  "profileId": "nl-BE",
+  "rulesetId": "core-pii-nl-be",
+  "languageTags": ["nl-BE"],
+  "formattingCategory": "formatting",
+  "formattingPolicy": {
+    "symbols": ["'", "\"", "’", "“", "”", "°", "/", "-", "–", "_", "+", ".", ",", ":", ";", "|", "(", ")", "[", "]", "{", "}"],
+    "protectedDecimalCategories": ["age_year", "age_month", "age_week", "age_day"],
+    "decimalSeparators": [".", ","]
+  },
+  "seedCategories": {
+    "Date": "__meddeid_seed__:Date",
+    "Age_Birthdate": "__meddeid_seed__:Age_Birthdate",
+    "Name": "__meddeid_seed__:Name",
+    "Profession": "__meddeid_seed__:Profession",
+    "Address_Location": "__meddeid_seed__:Address_Location",
+    "Organization": "__meddeid_seed__:Organization",
+    "Contactdetails": "__meddeid_seed__:Contactdetails",
+    "ID": "__meddeid_seed__:ID"
+  },
+  "autodetectCategories": [
+    "__meddeid_seed__:Name",
+    "__meddeid_seed__:Profession",
+    "__meddeid_seed__:Date",
+    "__meddeid_seed__:Organization",
+    "__meddeid_seed__:Address_Location",
+    "__meddeid_seed__:ID",
+    "__meddeid_seed__:Contactdetails"
+  ],
+  "categoryGroups": {
+    "general": ["formatting", "medical_info", "additional_info"],
+    "Name": ["given", "family", "initials", "title"],
+    "Profession": ["hobby", "profession", "employment_state"],
+    "Organization": ["company", "institution", "hospital_location"],
+    "Address_Location": ["country", "province", "region", "municipality", "postal_code", "street", "house_number", "bus_number", "postal_office"],
+    "Contactdetails": ["internal_phone", "public_phone", "fax_number", "given", "family", "initials", "institution", "additional_info"],
+    "ID": ["public_id", "internal_id"],
+    "Date": ["day", "week", "month", "year", "weekday", "time", "season"],
+    "Age_Birthdate": ["day", "week", "month", "year", "weekday", "time", "age_type", "age_year", "age_month", "age_week", "age_day"]
+  },
+  "javascript": {
+    "package": "@meddeid/language-nl",
+    "export": "./subannotation/nl-BE"
+  }
+}

@@ -1,7 +1,7 @@
 {
   "name": "@meddeid/language-nl",
-  "version": "0.1.0",
-  "description": "Dutch and nl-BE language-profile capabilities for MedDeID",
+  "version": "0.2.0",
+  "description": "Dutch nl-BE and nl-NL language-profile capabilities for MedDeID",
   "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
@@ -16,6 +16,7 @@
     "clinical-nlp",
     "dutch",
     "belgium",
+    "netherlands",
     "meddeid"
   ],
   "publishConfig": {
@@ -27,26 +28,32 @@
     "node": ">=20"
   },
   "exports": {
-    "./subannotation": "./js/subannotation-profile.js"
+    "./subannotation/nl-BE": "./js/subannotation-nl-be.js",
+    "./subannotation/nl-NL": "./js/subannotation-nl-nl.js"
   },
   "meddeid": {
     "subannotationProfiles": [
       {
-        "selection": "nl-BE@1",
-        "module": "@meddeid/language-nl/subannotation"
+        "selection": "nl-BE",
+        "module": "@meddeid/language-nl/subannotation/nl-BE"
+      },
+      {
+        "selection": "nl-NL",
+        "module": "@meddeid/language-nl/subannotation/nl-NL"
       }
     ]
   },
   "files": [
     "js/",
-    "src/meddeid_language_nl/resources/lookup/",
+    "src/meddeid_language_nl/resources/nl-BE/lookup/",
+    "src/meddeid_language_nl/resources/nl-NL/lookup/",
     "src/meddeid_language_nl/resources/subannotation/",
     "LICENSE",
     "NOTICE",
     "README.md"
   ],
   "scripts": {
-    "test": "node --test tests-js/subannotation-profile.test.js",
+    "test": "node --test tests-js/*.test.js",
     "prepublishOnly": "npm test"
   }
 }

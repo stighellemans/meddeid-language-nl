@@ -7,20 +7,21 @@ from functools import lru_cache
 from hashlib import sha256
 from importlib.resources import files
 
+from .identity import normalize_profile_id
 
-@lru_cache(maxsize=1)
-def subannotation_capability_manifest() -> dict:
+
+@lru_cache(maxsize=2)
+def subannotation_capability_manifest(profile_id: str) -> dict:
+    profile_id = normalize_profile_id(profile_id)
     path = files("meddeid_language_nl").joinpath(
-        "resources", "subannotation", "profile.json"
+        "resources", "subannotation", f"{profile_id}.json"
     )
     content = path.read_bytes()
     profile = json.loads(content)
     return {
         "contract_version": profile["contractVersion"],
         "profile_id": profile["profileId"],
-        "profile_version": profile["profileVersion"],
         "ruleset_id": profile["rulesetId"],
-        "ruleset_version": profile["rulesetVersion"],
         "runtime": "javascript",
         "package": profile["javascript"]["package"],
         "export": profile["javascript"]["export"],
@@ -28,5 +29,5 @@ def subannotation_capability_manifest() -> dict:
     }
 
 
-def capability_manifest() -> dict:
-    return {"subannotation": subannotation_capability_manifest()}
+def capability_manifest(profile_id: str) -> dict:
+    return {"subannotation": subannotation_capability_manifest(profile_id)}

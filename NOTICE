@@ -27,5 +27,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-Packaged lookup values may have independent attribution requirements. See
-`src/meddeid_language_nl/resources/lookup/SOURCES.md`.
+Packaged lookup values may have independent attribution requirements. See the
+profile-scoped `src/meddeid_language_nl/resources/*/lookup/SOURCES.md` files.
+The Netherlands resources also include the exact upstream DEDUCE license file;
+their source notice records an upstream license-metadata discrepancy that must
+be resolved before publication.

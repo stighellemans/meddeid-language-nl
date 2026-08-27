@@ -1,13 +1,19 @@
 """Dutch language profiles for MedDeID."""
 
-from .date_pseudonyms import pseudonymize_date_text, pseudonymize_date_text_body
+from .date_pseudonyms import (
+    birth_date_variants,
+    date_replacement,
+    pseudonymize_date_text,
+    pseudonymize_date_text_body,
+)
 from .capabilities import capability_manifest, subannotation_capability_manifest
 from .lookups import lookup_categories, lookup_manifest, lookup_source, lookup_values
-from .profiles import NL_BE, LanguageProfile, get_profile
+from .profiles import NL_BE, NL_NL, LanguageProfile, get_profile
 
 __all__ = [
     "LanguageProfile",
     "NL_BE",
+    "NL_NL",
     "get_profile",
     "lookup_categories",
     "lookup_source",
@@ -15,8 +21,10 @@ __all__ = [
     "lookup_values",
     "pseudonymize_date_text",
     "pseudonymize_date_text_body",
+    "date_replacement",
+    "birth_date_variants",
     "capability_manifest",
     "subannotation_capability_manifest",
 ]
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"

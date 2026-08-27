@@ -1,5 +1,5 @@
 /**
- * nl-BE semantic subannotation capability.
+ * Dutch semantic subannotation capability factory.
  *
  * This module intentionally owns language/locale interpretation while the
  * application owns offsets, persistence, review state, and rule execution.
@@ -12,23 +12,18 @@ import { fileURLToPath } from 'node:url';
 
 const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const MODULE_PATH = fileURLToPath(import.meta.url);
-const LOOKUP_DIR = path.resolve(
-  MODULE_DIR,
-  '..',
-  'src',
-  'meddeid_language_nl',
-  'resources',
-  'lookup',
-);
-const PROFILE_SPEC = JSON.parse(fs.readFileSync(path.resolve(
-  MODULE_DIR,
-  '..',
-  'src',
-  'meddeid_language_nl',
-  'resources',
-  'subannotation',
-  'profile.json',
-), 'utf8'));
+function lookupDirectory(profileId) {
+  return path.resolve(
+    MODULE_DIR, '..', 'src', 'meddeid_language_nl', 'resources', profileId, 'lookup',
+  );
+}
+
+function readProfileSpec(profileId) {
+  return JSON.parse(fs.readFileSync(path.resolve(
+    MODULE_DIR, '..', 'src', 'meddeid_language_nl', 'resources',
+    'subannotation', `${profileId}.json`,
+  ), 'utf8'));
+}
 
 const LOOKUP_FILES = Object.freeze({
   first_names: 'first_names.txt',
@@ -48,17 +43,17 @@ function normalize(value) {
   return String(value ?? '').normalize('NFKC').trim().toLocaleLowerCase('nl');
 }
 
-function readLookup(category) {
+function readLookup(profileId, category) {
   const filename = LOOKUP_FILES[category];
-  if (!filename) throw new Error(`Unknown nl-BE lookup category: ${category}`);
-  return fs.readFileSync(path.join(LOOKUP_DIR, filename), 'utf8')
+  if (!filename) throw new Error(`Unknown ${profileId} lookup category: ${category}`);
+  return fs.readFileSync(path.join(lookupDirectory(profileId), filename), 'utf8')
     .split(/\r?\n/u)
     .map((line) => line.trim())
     .filter((line) => line && !line.startsWith('#'));
 }
 
-function lookupSet(category) {
-  return new Set(readLookup(category).map(normalize));
+function lookupSet(profileId, category) {
+  return new Set(readLookup(profileId, category).map(normalize));
 }
 
 function tokenize(value) {
@@ -118,16 +113,21 @@ function longestPhraseAt(tokens, semanticIndex, trie) {
   return best;
 }
 
-const FIRST_NAMES = lookupSet('first_names');
-const FAMILY_NAMES = lookupSet('family_names');
-const INTERFIXES = lookupSet('interfixes');
-const PREFIX_TRIE = createPhraseTrie(readLookup('prefixes'));
-const STREET_TRIE = createPhraseTrie(readLookup('streets'));
-const LOCALITY_TRIE = createPhraseTrie(readLookup('localities'));
-const HOSPITAL_TRIE = createPhraseTrie([
-  ...readLookup('hospitals'),
-  ...readLookup('healthcare_institutions'),
-]);
+function createContext(profileId) {
+  return Object.freeze({
+    profileId,
+    firstNames: lookupSet(profileId, 'first_names'),
+    familyNames: lookupSet(profileId, 'family_names'),
+    interfixes: lookupSet(profileId, 'interfixes'),
+    prefixTrie: createPhraseTrie(readLookup(profileId, 'prefixes')),
+    streetTrie: createPhraseTrie(readLookup(profileId, 'streets')),
+    localityTrie: createPhraseTrie(readLookup(profileId, 'localities')),
+    hospitalTrie: createPhraseTrie([
+      ...readLookup(profileId, 'hospitals'),
+      ...readLookup(profileId, 'healthcare_institutions'),
+    ]),
+  });
+}
 
 const DUTCH_MONTHS = new Set([
   'januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus',
@@ -146,13 +146,13 @@ const AGE_UNITS = new Map([
   ['dag', 'age_day'], ['dagen', 'age_day'],
 ]);
 
-function absoluteSegments(segment, tokens, categories) {
+function absoluteSegments(segment, tokens, categories, fallbackCategory = 'additional_info') {
   return tokens.map((token, index) => ({
     begin: segment.begin + token.begin,
     end: segment.begin + token.end,
     category: token.kind === 'formatting'
       ? 'formatting'
-      : categories[index] ?? segment.category,
+      : categories[index] ?? fallbackCategory,
   }));
 }
 
@@ -219,7 +219,7 @@ function parseDutchDate({ segment, text }) {
   return absoluteSegments(segment, tokens, categories);
 }
 
-function parseName({ item, segment, text }) {
+function parseName({ context, item, segment, text }) {
   const tokens = tokenize(text);
   const categories = [];
   const semanticIndices = tokens.map((token, index) => ({ token, index }))
@@ -231,7 +231,7 @@ function parseName({ item, segment, text }) {
   for (let position = 0; position < semanticIndices.length; position += 1) {
     const index = semanticIndices[position];
     const token = tokens[index];
-    const prefixLength = longestPhraseAt(tokens, index, PREFIX_TRIE);
+    const prefixLength = longestPhraseAt(tokens, index, context.prefixTrie);
     if (prefixLength > 0 && position === 0) {
       let remaining = prefixLength;
       for (let cursor = index; cursor < tokens.length && remaining > 0; cursor += 1) {
@@ -242,14 +242,20 @@ function parseName({ item, segment, text }) {
       }
       continue;
     }
-    if (token.normalized === metadataGiven || FIRST_NAMES.has(token.normalized)) {
+    if (token.normalized === metadataGiven || context.firstNames.has(token.normalized)) {
       categories[index] = 'given';
     }
-    if (token.normalized === metadataFamily || FAMILY_NAMES.has(token.normalized)) {
+    if (token.normalized === metadataFamily || context.familyNames.has(token.normalized)) {
       if (!categories[index] || position === semanticIndices.length - 1) categories[index] = 'family';
     }
-    if (INTERFIXES.has(token.normalized)) categories[index] = 'family';
+    if (context.interfixes.has(token.normalized)) categories[index] = 'family';
     if (Array.from(token.raw).length === 1) categories[index] = 'initials';
+  }
+  const nameCore = semanticIndices.filter((index) => categories[index] !== 'title');
+  if (nameCore.length > 0) {
+    const lastIndex = nameCore[nameCore.length - 1];
+    categories[lastIndex] ??= nameCore.length === 1 ? 'given' : 'family';
+    for (const index of nameCore.slice(0, -1)) categories[index] ??= 'given';
   }
   return absoluteSegments(segment, tokens, categories);
 }
@@ -269,30 +275,40 @@ function applyPhraseCategory(tokens, categories, trie, category) {
   }
 }
 
-function parseAddressOrOrganization({ segment, text }) {
+function parseAddressOrOrganization({ context, item, segment, text, seedGroup }) {
   const tokens = tokenize(text);
   const categories = [];
-  if (segment.category === 'organization_identifier') {
-    applyPhraseCategory(tokens, categories, HOSPITAL_TRIE, 'institution');
+  if (seedGroup === 'Organization') {
+    applyPhraseCategory(tokens, categories, context.hospitalTrie, 'institution');
+    const fallbackCategory = item?.gold?.subtype === 'Healthcare' ? 'institution' : 'company';
+    for (let index = 0; index < tokens.length; index += 1) {
+      if (tokens[index].kind !== 'formatting' && !categories[index]) {
+        categories[index] = fallbackCategory;
+      }
+    }
   } else {
-    applyPhraseCategory(tokens, categories, STREET_TRIE, 'street');
-    applyPhraseCategory(tokens, categories, LOCALITY_TRIE, 'municipality');
+    applyPhraseCategory(tokens, categories, context.streetTrie, 'street');
+    applyPhraseCategory(tokens, categories, context.localityTrie, 'municipality');
     for (let index = 0; index < tokens.length; index += 1) {
       const token = tokens[index];
       if (token.kind !== 'number' || categories[index]) continue;
       if (token.raw.length === 4 && Number(token.raw) >= 1000) {
         categories[index] = 'postal_code';
       } else {
-        const previousSemantic = tokens.slice(0, index).reverse()
-          .findIndex((candidate) => candidate.kind !== 'formatting');
-        categories[index] = previousSemantic >= 0 ? 'house_number' : segment.category;
+        categories[index] = 'house_number';
+      }
+    }
+    const hasStreetEvidence = categories.includes('street') || categories.includes('house_number');
+    for (let index = 0; index < tokens.length; index += 1) {
+      if (tokens[index].kind !== 'formatting' && !categories[index]) {
+        categories[index] = hasStreetEvidence ? 'street' : 'municipality';
       }
     }
   }
   return absoluteSegments(segment, tokens, categories);
 }
 
-function parseContact({ segment, text }) {
+function parseContact({ context, segment, text }) {
   const compact = String(text).trim();
   const digits = compact.replace(/\D/gu, '');
   if (!compact.includes('@') && /^[+\d\s()./-]+$/u.test(compact) && digits.length >= 4) {
@@ -306,87 +322,113 @@ function parseContact({ segment, text }) {
     const tokens = tokenize(text);
     const categories = tokens.map((token) => {
       if (token.kind === 'formatting') return 'formatting';
-      if (FIRST_NAMES.has(token.normalized)) return 'given';
-      if (FAMILY_NAMES.has(token.normalized)) return 'family';
+      if (context.firstNames.has(token.normalized)) return 'given';
+      if (context.familyNames.has(token.normalized)) return 'family';
       return 'additional_info';
     });
     return absoluteSegments(segment, tokens, categories);
   }
-  return null;
+  return [{ ...segment, category: 'additional_info' }];
 }
 
-const RULES = Object.freeze([
+function createRules(context, spec) {
+  return Object.freeze([
   Object.freeze({
     ruleId: 'split_dutch_date_variants',
     transformSegment({ item, segment, text }) {
-      return segment.category === 'datetime_identifier'
+      return [spec.seedCategories.Date, spec.seedCategories.Age_Birthdate].includes(segment.category)
         ? parseDutchDate({ item, segment, text })
         : null;
     },
   }),
   Object.freeze({
+    ruleId: 'classify_profession_content',
+    transformSegment({ segment, text }) {
+      if (segment.category !== spec.seedCategories.Profession) return null;
+      return absoluteSegments(segment, tokenize(text), [], 'profession');
+    },
+  }),
+  Object.freeze({
     ruleId: 'split_name_variants_from_profile',
     transformSegment({ item, segment, text }) {
-      return segment.category === 'name_identifier'
-        ? parseName({ item, segment, text })
+      return segment.category === spec.seedCategories.Name
+        ? parseName({ context, item, segment, text })
         : null;
     },
   }),
   Object.freeze({
     ruleId: 'split_address_organization_variants_from_profile',
-    transformSegment({ segment, text }) {
-      return ['address_identifier', 'organization_identifier'].includes(segment.category)
-        ? parseAddressOrOrganization({ segment, text })
-        : null;
+    transformSegment({ item, segment, text }) {
+      if (segment.category === spec.seedCategories.Address_Location) {
+        return parseAddressOrOrganization({
+          context, item, segment, text, seedGroup: 'Address_Location',
+        });
+      }
+      if (segment.category === spec.seedCategories.Organization) {
+        return parseAddressOrOrganization({
+          context, item, segment, text, seedGroup: 'Organization',
+        });
+      }
+      return null;
     },
   }),
   Object.freeze({
     ruleId: 'split_contact_variants',
     transformSegment({ segment, text }) {
-      return segment.category === 'contact_identifier'
-        ? parseContact({ segment, text })
+      return segment.category === spec.seedCategories.Contactdetails
+        ? parseContact({ context, segment, text })
         : null;
     },
   }),
   Object.freeze({
     ruleId: 'classify_identifier_content',
-    transformSegment({ segment }) {
-      return segment.category === 'id_identifier'
-        ? [{ ...segment, category: 'internal_id' }]
-        : null;
+    transformSegment({ segment, text }) {
+      if (segment.category !== spec.seedCategories.ID) return null;
+      const compact = String(text).replace(/\D/gu, '');
+      const category = compact.length === 9 || compact.length === 11
+        ? 'public_id'
+        : 'internal_id';
+      return absoluteSegments(segment, tokenize(text), [], category);
     },
   }),
-]);
+  ]);
+}
 
-function resourceManifest() {
+function resourceManifest(profileId) {
   const resources = {};
   for (const [category, filename] of Object.entries(LOOKUP_FILES)) {
-    const content = fs.readFileSync(path.join(LOOKUP_DIR, filename));
+    const resourcePath = path.join(lookupDirectory(profileId), filename);
+    if (!fs.existsSync(resourcePath)) continue;
+    const content = fs.readFileSync(resourcePath);
     resources[category] = {
       filename,
       sha256: crypto.createHash('sha256').update(content).digest('hex'),
-      values: readLookup(category).length,
+      values: readLookup(profileId, category).length,
     };
   }
   return {
     manifest_version: 'meddeid.language-resources.v1',
     package: 'meddeid-language-nl',
-    package_version: '0.1.0',
-    profile_id: 'nl-BE',
-    profile_version: '1',
+    package_version: '0.2.0',
+    profile_id: profileId,
     resources,
   };
 }
 
-export const subannotationProfile = Object.freeze({
-  ...PROFILE_SPEC,
-  rules: RULES,
-  resourceManifest: resourceManifest(),
-  implementation: Object.freeze({
-    package: '@meddeid/language-nl',
-    export: './subannotation',
-    sha256: crypto.createHash('sha256').update(fs.readFileSync(MODULE_PATH)).digest('hex'),
-  }),
-});
-
-export default subannotationProfile;
+export function createSubannotationProfile(profileId) {
+  if (!['nl-BE', 'nl-NL'].includes(profileId)) {
+    throw new Error(`Unsupported Dutch language profile: ${profileId}`);
+  }
+  const spec = readProfileSpec(profileId);
+  const context = createContext(profileId);
+  return Object.freeze({
+    ...spec,
+    rules: createRules(context, spec),
+    resourceManifest: resourceManifest(profileId),
+    implementation: Object.freeze({
+      package: '@meddeid/language-nl',
+      export: spec.javascript.export,
+      sha256: crypto.createHash('sha256').update(fs.readFileSync(MODULE_PATH)).digest('hex'),
+    }),
+  });
+}

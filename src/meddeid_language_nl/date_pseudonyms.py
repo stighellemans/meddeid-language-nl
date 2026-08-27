@@ -6,6 +6,12 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Literal
 
+from meddeid_core.age_policy import (
+    AgeGranularityPolicy,
+    load_age_granularity_policy,
+)
+from meddeid_core.language import DateReplacement
+
 
 DateGranularity = Literal[
     "day",
@@ -286,6 +292,7 @@ def pseudonymize_date_text(
     context_after: str = "",
     document_creation_date: str | None = None,
     birthdate_replacement_mode: str = "age",
+    age_granularity_policy: AgeGranularityPolicy | None = None,
 ) -> str | None:
     substitute = pseudonymize_date_text_body(
         text,
@@ -295,6 +302,7 @@ def pseudonymize_date_text(
         context_after=context_after,
         document_creation_date=document_creation_date,
         birthdate_replacement_mode=birthdate_replacement_mode,
+        age_granularity_policy=age_granularity_policy,
     )
     if substitute is None:
         return None
@@ -310,6 +318,7 @@ def pseudonymize_date_text_body(
     context_after: str = "",
     document_creation_date: str | None = None,
     birthdate_replacement_mode: str = "age",
+    age_granularity_policy: AgeGranularityPolicy | None = None,
 ) -> str | None:
     if date_shift_days is None:
         return None
@@ -338,7 +347,11 @@ def pseudonymize_date_text_body(
                 if document_date is not None
                 else date(REFERENCE_YEAR_FOR_YEARLESS_DATES, 1, 1)
             )
-            return render_age_expression(age_expression, reference_date)
+            return render_age_expression(
+                age_expression,
+                reference_date,
+                age_granularity_policy=age_granularity_policy,
+            )
         standalone_substitute = pseudonymize_standalone_age_birthdate(
             text,
             date_shift_days=date_shift_days,
@@ -379,6 +392,7 @@ def pseudonymize_date_text_body(
                 shifted_start,
                 shifted_end,
                 shifted_document_date,
+                age_granularity_policy=age_granularity_policy,
             )
             if age_substitute is not None:
                 return age_substitute
@@ -386,6 +400,65 @@ def pseudonymize_date_text_body(
     if label == "Date":
         return render_shifted_date(parsed, shifted_start, shifted_end, text)
     return None
+
+
+def date_replacement(
+    text: str,
+    *,
+    label: str,
+    date_shift_days: int,
+    context_before: str = "",
+    context_after: str = "",
+    document_creation_date: str | None = None,
+    age_granularity_policy: AgeGranularityPolicy,
+) -> DateReplacement | None:
+    """Language-profile hook returning an unbracketed replacement body."""
+    body = pseudonymize_date_text_body(
+        text,
+        label=label,
+        date_shift_days=date_shift_days,
+        context_before=context_before,
+        context_after=context_after,
+        document_creation_date=document_creation_date,
+        age_granularity_policy=age_granularity_policy,
+    )
+    if body is None:
+        return None
+    if label == "Date":
+        kind = "shifted_date"
+    elif parse_age_expression(text) is not None or parse_document_creation_date(
+        document_creation_date
+    ) is not None:
+        kind = "age_generalized"
+    else:
+        kind = "year_fallback"
+    return DateReplacement(body=body, kind=kind)
+
+
+def birth_date_variants(value: str) -> tuple[str, ...]:
+    """Return bounded full-year Dutch representations for trusted metadata."""
+    try:
+        parsed = parse_date_text(value)
+    except ValueError as exc:
+        raise ValueError(f"invalid patient.birth_date {value!r}") from exc
+    if parsed.granularity != "day" or parsed.start != parsed.end:
+        raise ValueError(f"invalid patient.birth_date {value!r}; expected a full date")
+    birthdate = parsed.start
+    month_full = DUTCH_MONTHS_FULL[birthdate.month - 1]
+    month_abbr = DUTCH_MONTHS_ABBR[birthdate.month - 1]
+    candidates = (
+        value.strip(),
+        birthdate.isoformat(),
+        f"{birthdate.day:02d}/{birthdate.month:02d}/{birthdate.year:04d}",
+        f"{birthdate.day}/{birthdate.month}/{birthdate.year:04d}",
+        f"{birthdate.day:02d}-{birthdate.month:02d}-{birthdate.year:04d}",
+        f"{birthdate.day}-{birthdate.month}-{birthdate.year:04d}",
+        f"{birthdate.day:02d}.{birthdate.month:02d}.{birthdate.year:04d}",
+        f"{birthdate.day} {month_full} {birthdate.year:04d}",
+        f"{birthdate.day} {month_abbr} {birthdate.year:04d}",
+        f"{birthdate.day}-{month_abbr}-{birthdate.year:04d}",
+    )
+    return tuple(dict.fromkeys(candidate for candidate in candidates if candidate))
 
 
 def bracket_substitute(substitute: str) -> str:
@@ -1458,9 +1531,19 @@ def render_birthdate_age_interval(
     shifted_start: date,
     shifted_end: date,
     shifted_document_date: date,
+    *,
+    age_granularity_policy: AgeGranularityPolicy | None = None,
 ) -> str | None:
-    start_age = render_birthdate_age(shifted_start, shifted_document_date)
-    end_age = render_birthdate_age(shifted_end, shifted_document_date)
+    start_age = render_birthdate_age(
+        shifted_start,
+        shifted_document_date,
+        age_granularity_policy=age_granularity_policy,
+    )
+    end_age = render_birthdate_age(
+        shifted_end,
+        shifted_document_date,
+        age_granularity_policy=age_granularity_policy,
+    )
     if start_age is None or end_age is None:
         return None
     if start_age == end_age:
@@ -1468,8 +1551,17 @@ def render_birthdate_age_interval(
     return f"{start_age}/{end_age}"
 
 
-def render_birthdate_age(birthdate: date, reference_date: date) -> str | None:
-    parts = age_band_parts(birthdate, reference_date)
+def render_birthdate_age(
+    birthdate: date,
+    reference_date: date,
+    *,
+    age_granularity_policy: AgeGranularityPolicy | None = None,
+) -> str | None:
+    parts = age_band_parts(
+        birthdate,
+        reference_date,
+        age_granularity_policy=age_granularity_policy,
+    )
     if parts is None:
         return None
     rendered = ", ".join(AGE_PART_TEXT[unit](value) for value, unit in parts)
@@ -1479,39 +1571,15 @@ def render_birthdate_age(birthdate: date, reference_date: date) -> str | None:
 def age_band_parts(
     birthdate: date,
     reference_date: date,
+    *,
+    age_granularity_policy: AgeGranularityPolicy | None = None,
 ) -> tuple[tuple[int, str], ...] | None:
-    """Return the age as ``(value, unit)`` parts at the band granularity.
-
-    The bands are the single source of truth for age precision: they are used
-    both for birthdate spans and for age expressions that are already written
-    as a duration in the source text.
-    """
-    if birthdate > reference_date:
+    """Compatibility wrapper around the suite-wide core policy."""
+    policy = age_granularity_policy or load_age_granularity_policy()
+    parts = policy.generalize(birthdate, reference_date)
+    if parts is None:
         return None
-
-    total_days = (reference_date - birthdate).days
-    years, months, days = age_calendar_parts(birthdate, reference_date)
-    total_months = years * 12 + months
-
-    if total_days <= 28:
-        return ((total_days, "day"),)
-    if total_days <= 90:
-        weeks, remaining_days = divmod(total_days, 7)
-        if remaining_days == 0:
-            return ((weeks, "week"),)
-        return ((weeks, "week"), (remaining_days, "day"))
-    if total_months < 6:
-        weeks = days // 7
-        if weeks == 0:
-            return ((total_months, "month"),)
-        return ((total_months, "month"), (weeks, "week"))
-    if total_months < 24:
-        return ((total_months, "month"),)
-    if years < 12:
-        if months == 0:
-            return ((years, "year"),)
-        return ((years, "year"), (months, "month"))
-    return ((years, "year"),)
+    return tuple((part.value, part.unit) for part in parts)
 
 
 def age_calendar_parts(birthdate: date, reference_date: date) -> tuple[int, int, int]:
@@ -1646,6 +1714,8 @@ def parse_age_expression(text: str) -> AgeExpression | None:
 def render_age_expression(
     expression: AgeExpression,
     reference_date: date,
+    *,
+    age_granularity_policy: AgeGranularityPolicy | None = None,
 ) -> str | None:
     """Re-render an age expression at the band granularity.
 
@@ -1655,7 +1725,11 @@ def render_age_expression(
     returned untouched, and adjectival forms stay adjectival.
     """
     birthdate = age_expression_birthdate(expression, reference_date)
-    parts = age_band_parts(birthdate, reference_date)
+    parts = age_band_parts(
+        birthdate,
+        reference_date,
+        age_granularity_policy=age_granularity_policy,
+    )
     if parts is None:
         return None
     if tuple((float(value), unit) for value, unit in parts) == expression.parts:

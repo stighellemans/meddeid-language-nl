@@ -1,4 +1,4 @@
-"""Stable access to the lookup resources owned by the ``nl-BE`` profile."""
+"""Stable access to profile-scoped Dutch lookup resources."""
 
 from __future__ import annotations
 
@@ -6,8 +6,10 @@ from functools import lru_cache
 from hashlib import sha256
 from importlib.resources import files
 
+from .identity import normalize_profile_id
 
-LOOKUP_FILES = {
+
+COMMON_LOOKUP_FILES = {
     "first_names": "first_names.txt",
     "family_names": "family_names.txt",
     "prefixes": "prefixes.txt",
@@ -15,65 +17,88 @@ LOOKUP_FILES = {
     "interfix_surnames": "interfix_surnames.txt",
     "streets": "streets.txt",
     "localities": "localities.txt",
-    "postal_localities": "postal_localities.txt",
-    "postal_code_localities": "postal_code_localities.txt",
     "hospitals": "hospitals.txt",
     "healthcare_institutions": "healthcare_institutions.txt",
 }
+LOOKUP_FILES = {
+    "nl-BE": {
+        **COMMON_LOOKUP_FILES,
+        "postal_localities": "postal_localities.txt",
+        "postal_code_localities": "postal_code_localities.txt",
+    },
+    "nl-NL": COMMON_LOOKUP_FILES,
+}
 
 
-def lookup_categories() -> tuple[str, ...]:
-    return tuple(LOOKUP_FILES)
+def lookup_categories(profile_id: str) -> tuple[str, ...]:
+    profile_id = normalize_profile_id(profile_id)
+    return tuple(LOOKUP_FILES[profile_id])
 
 
 @lru_cache(maxsize=None)
-def lookup_values(category: str) -> tuple[str, ...]:
+def lookup_values(profile_id: str, category: str) -> tuple[str, ...]:
+    profile_id = normalize_profile_id(profile_id)
     try:
-        filename = LOOKUP_FILES[category]
+        filename = LOOKUP_FILES[profile_id][category]
     except KeyError as exc:
-        supported = ", ".join(lookup_categories())
+        supported = ", ".join(lookup_categories(profile_id))
         raise KeyError(
-            f"unknown nl-BE lookup category {category!r}; expected one of: {supported}"
+            f"unknown {profile_id} lookup category {category!r}; "
+            f"expected one of: {supported}"
         ) from exc
 
-    path = files("meddeid_language_nl").joinpath("resources", "lookup", filename)
+    path = files("meddeid_language_nl").joinpath(
+        "resources", profile_id, "lookup", filename
+    )
     values = tuple(
         line.strip()
         for line in path.read_text(encoding="utf-8").splitlines()
         if line.strip() and not line.lstrip().startswith("#")
     )
     if not values:
-        raise RuntimeError(f"packaged nl-BE lookup is empty: {category}")
+        raise RuntimeError(f"packaged {profile_id} lookup is empty: {category}")
     return values
 
 
-def lookup_source() -> str:
-    return "meddeid-language-nl 0.1.1 nl-BE lookup resources"
+def lookup_source(profile_id: str) -> str:
+    profile_id = normalize_profile_id(profile_id)
+    return f"meddeid-language-nl 0.2.0 {profile_id} lookup resources"
 
 
-@lru_cache(maxsize=1)
-def lookup_manifest() -> dict:
-    """Return immutable-release facts for every packaged lookup resource."""
+@lru_cache(maxsize=2)
+def lookup_manifest(profile_id: str) -> dict:
+    """Return immutable release facts for a profile's packaged resources."""
 
+    profile_id = normalize_profile_id(profile_id)
     resources = {}
-    root = files("meddeid_language_nl").joinpath("resources", "lookup")
-    for category, filename in LOOKUP_FILES.items():
+    root = files("meddeid_language_nl").joinpath("resources", profile_id, "lookup")
+    for category, filename in LOOKUP_FILES[profile_id].items():
         content = root.joinpath(filename).read_bytes()
         resources[category] = {
             "filename": filename,
             "sha256": sha256(content).hexdigest(),
-            "values": len(lookup_values(category)),
+            "values": len(lookup_values(profile_id, category)),
         }
     notice = root.joinpath("SOURCES.md").read_bytes()
+    provenance = {
+        "filename": "SOURCES.md",
+        "sha256": sha256(notice).hexdigest(),
+    }
+    upstream_license = root.joinpath("DEDUCE-LICENSE.md")
+    if upstream_license.is_file():
+        provenance["upstream_license_filename"] = "DEDUCE-LICENSE.md"
+        provenance["upstream_license_sha256"] = sha256(
+            upstream_license.read_bytes()
+        ).hexdigest()
     return {
         "manifest_version": "meddeid.language-resources.v1",
         "package": "meddeid-language-nl",
-        "package_version": "0.1.1",
-        "profile_id": "nl-BE",
-        "profile_version": "1",
+        "package_version": "0.2.0",
+        "profile_id": profile_id,
         "resources": resources,
-        "provenance": {
-            "filename": "SOURCES.md",
-            "sha256": sha256(notice).hexdigest(),
-        },
+        "provenance": provenance,
     }
+
+
+def manifests() -> dict[str, dict]:
+    return {profile_id: lookup_manifest(profile_id) for profile_id in LOOKUP_FILES}
