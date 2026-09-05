@@ -1,13 +1,13 @@
 {
   "name": "@meddeid/language-nl",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Dutch nl-BE and nl-NL language-profile capabilities for MedDeID",
   "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/stighellemans/meddeid-language-nl.git"
   },
-  "homepage": "https://stighellemans.github.io/meddeid.github.io/concepts/architecture/",
+  "homepage": "https://stighellemans.github.io/meddeid/concepts/architecture/",
   "bugs": {
     "url": "https://github.com/stighellemans/meddeid-language-nl/issues"
   },

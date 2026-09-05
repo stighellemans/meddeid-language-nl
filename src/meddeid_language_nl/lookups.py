@@ -62,7 +62,7 @@ def lookup_values(profile_id: str, category: str) -> tuple[str, ...]:
 
 def lookup_source(profile_id: str) -> str:
     profile_id = normalize_profile_id(profile_id)
-    return f"meddeid-language-nl 0.2.0 {profile_id} lookup resources"
+    return f"meddeid-language-nl 0.2.1 {profile_id} lookup resources"
 
 
 @lru_cache(maxsize=2)
@@ -93,7 +93,7 @@ def lookup_manifest(profile_id: str) -> dict:
     return {
         "manifest_version": "meddeid.language-resources.v1",
         "package": "meddeid-language-nl",
-        "package_version": "0.2.0",
+        "package_version": "0.2.1",
         "profile_id": profile_id,
         "resources": resources,
         "provenance": provenance,

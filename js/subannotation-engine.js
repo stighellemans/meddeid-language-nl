@@ -409,7 +409,7 @@ function resourceManifest(profileId) {
   return {
     manifest_version: 'meddeid.language-resources.v1',
     package: 'meddeid-language-nl',
-    package_version: '0.2.0',
+    package_version: '0.2.1',
     profile_id: profileId,
     resources,
   };

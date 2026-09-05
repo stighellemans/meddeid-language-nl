@@ -5,7 +5,7 @@ and rendering rules plus profile-scoped resources for Belgium (`nl-BE`) and
 the Netherlands (`nl-NL`). Both profiles are designed for the same Dutch
 recognizer model.
 
-See the [suite architecture](https://stighellemans.github.io/meddeid.github.io/concepts/architecture/)
+See the [suite architecture](https://stighellemans.github.io/meddeid/concepts/architecture/)
 for how language profiles fit into inference, generation, and evaluation. This
 repository is authoritative for Dutch behavior and lookup-resource provenance.
 
@@ -50,7 +50,7 @@ Install the published JavaScript capability from npm and select it in a
 `meddeid-subannotate` workspace:
 
 ```bash
-npm install --no-save @meddeid/language-nl@0.2.0
+npm install --no-save @meddeid/language-nl@0.2.1
 npm run profile -- set nl-BE nl-NL
 npm run dev
 ```
