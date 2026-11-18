@@ -1,6 +1,6 @@
 {
   "name": "@meddeid/language-nl",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Dutch nl-BE and nl-NL language-profile capabilities for MedDeID",
   "license": "AGPL-3.0-only",
   "repository": {
