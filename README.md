@@ -90,7 +90,7 @@ Code is AGPL-3.0-only, with incorporated MIT-licensed code identified in
 `NOTICE`. Lookup resources retain the terms documented with their source
 notice.
 
-## Stable name aliases (Python 0.2.2)
+## Stable name aliases (Python 0.2.3)
 
 The Python name provider uses the existing nl-BE / nl-NL first-name and
 family-name resources. It does not download another name database. The shared
@@ -102,7 +102,7 @@ from meddeid_language_nl import pseudonymize_name_text
 
 # Synthetic reproducibility fixture only; use a protected random key in production.
 pseudonymize_name_text("Mark Peters", key=bytes(range(32)), scope="study-a")
-# "[Sue-Ann Colen]"
+# "[Hermela Verlaine]"
 ```
 
 `pseudonymize_name_text()` returns a bracketed alias or `None` for an unsupported
@@ -111,10 +111,4 @@ name. The profile hook `replace_name()` returns the same body without brackets.
 The public MedDeID runtime selects this with `metadata.name_replacement=true`
 for all Name subtypes; false or omission keeps the original labels.
 
-Aliases are stable for the same normalized spelling, key, scope, algorithm and
-pinned locale resources, independent of worker or document order. Spelling
-variants such as full names and initials are not merged into a person identity.
-An alias is not a unique identifier: finite name combinations can collide.
-Case and initial punctuation affect presentation only. Resource catalogs are
-cached per process and profile; person names and derived aliases are not cached.
-JavaScript subannotation exports are unchanged; name replacement runs in Python.
+The helper uses the supplied key and scope for deterministic component aliases. A lone given name or surname keeps its alias when rendered as part of a full name. A missing middle name omits only that component. Initials use the first letter of the corresponding alias. The runtime defaults to a patient-specific key within each study. The same alias or initial can refer to multiple people. Workers cache public catalog resources per profile. The JavaScript package exports subannotations separately.

@@ -30,4 +30,4 @@ __all__ = [
     "subannotation_capability_manifest",
 ]
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
