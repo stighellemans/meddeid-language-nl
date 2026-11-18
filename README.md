@@ -89,3 +89,32 @@ Lookup provenance and source-specific terms are documented in
 Code is AGPL-3.0-only, with incorporated MIT-licensed code identified in
 `NOTICE`. Lookup resources retain the terms documented with their source
 notice.
+
+## Stable name aliases (Python 0.2.2)
+
+The Python name provider uses the existing nl-BE / nl-NL first-name and
+family-name resources. It does not download another name database. The shared
+core renderer preserves recognized titles, initials and case. English profiles
+also supply their own recognized suffixes and credentials.
+
+```python
+from meddeid_language_nl import pseudonymize_name_text
+
+# Synthetic reproducibility fixture only; use a protected random key in production.
+pseudonymize_name_text("Mark Peters", key=bytes(range(32)), scope="study-a")
+# "[Sue-Ann Colen]"
+```
+
+`pseudonymize_name_text()` returns a bracketed alias or `None` for an unsupported
+shape. Callers must use the original entity label on `None`, never the source
+name. The profile hook `replace_name()` returns the same body without brackets.
+The public MedDeID runtime selects this with `metadata.name_replacement=true`
+for all Name subtypes; false or omission keeps the original labels.
+
+Aliases are stable for the same normalized spelling, key, scope, algorithm and
+pinned locale resources, independent of worker or document order. Spelling
+variants such as full names and initials are not merged into a person identity.
+An alias is not a unique identifier: finite name combinations can collide.
+Case and initial punctuation affect presentation only. Resource catalogs are
+cached per process and profile; person names and derived aliases are not cached.
+JavaScript subannotation exports are unchanged; name replacement runs in Python.

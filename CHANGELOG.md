@@ -5,6 +5,9 @@ semantic versioning while pre-1.0 versions may still refine public contracts.
 
 ## [Unreleased]
 
+- Added deterministic bracketed name aliases for `nl-BE` and `nl-NL`, using the existing name resources.
+- Preserved UZA name-spelling v1 output, titles, initials, case, and safe label fallbacks. Requires core 0.2.2.
+
 ## [0.2.1] - 2026-09-05
 
 - Enabled npm trusted publishing and refreshed citation metadata for the
