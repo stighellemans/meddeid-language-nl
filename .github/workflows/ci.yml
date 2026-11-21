@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - run: python -m pip install 'meddeid-core @ git+https://github.com/stighellemans/meddeid-core.git@0d4f65ff5bb7a5aad7c45bb532ac31d5d147734e'
+      - run: python -m pip install 'meddeid-core @ git+https://github.com/stighellemans/meddeid-core.git@deb496bc682b93f715ca74fd6eaa1498105b640a'
       - run: python -m pip install '.[dev]' build twine
       - run: python -m pip check
       - run: pytest -q
