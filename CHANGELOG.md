@@ -3,10 +3,12 @@
 All notable user-visible changes are recorded here. This project follows
 semantic versioning while pre-1.0 versions may still refine public contracts.
 
-## [Unreleased]
+## [0.2.4] - 2026-11-21
+
+- Render event dates and clinical ages independently with the selected language profile.
 
 - Added deterministic bracketed name aliases for `nl-BE` and `nl-NL`, using the existing name resources.
-- Preserved UZA name-spelling v1 output, titles, initials, case, and safe label fallbacks. Requires core 0.2.2.
+- Preserved UZA name-spelling v1 output, titles, initials, case, and safe label fallbacks. Requires core 0.2.4.
 
 ## [0.2.1] - 2026-09-05
 

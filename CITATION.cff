@@ -3,8 +3,8 @@ message: "If you use MedDeID Dutch language profile, cite this software and the 
 title: "MedDeID Dutch language profile"
 abstract: "Dutch language and nl-BE locale capabilities for MedDeID."
 type: software
-version: "0.2.1"
-date-released: 2026-09-05
+version: "0.2.4"
+date-released: 2026-11-21
 authors:
   - family-names: Hellemans
     given-names: Stig

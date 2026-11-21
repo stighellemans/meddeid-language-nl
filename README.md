@@ -108,7 +108,8 @@ pseudonymize_name_text("Mark Peters", key=bytes(range(32)), scope="study-a")
 `pseudonymize_name_text()` returns a bracketed alias or `None` for an unsupported
 shape. Callers must use the original entity label on `None`, never the source
 name. The profile hook `replace_name()` returns the same body without brackets.
-The public MedDeID runtime selects this with `metadata.name_replacement=true`
-for all Name subtypes; false or omission keeps the original labels.
+For HTTP inference, set `render.name_replacement` to true and pass the
+patient ID in `render.pseudonymization_scope`. The gateway reads the mapping
+key from its configured secret file. [Rendering guide](https://stighellemans.github.io/meddeid/workflows/rendering/)
 
-The helper uses the supplied key and scope for deterministic component aliases. A lone given name or surname keeps its alias when rendered as part of a full name. A missing middle name omits only that component. Initials use the first letter of the corresponding alias. The runtime defaults to a patient-specific key within each study. The same alias or initial can refer to multiple people. Workers cache public catalog resources per profile. The JavaScript package exports subannotations separately.
+The helper uses the supplied key and scope for deterministic component aliases. A lone given name or surname keeps its alias when rendered as part of a full name. A missing middle name omits only that component. Initials use the first letter of the corresponding alias. Include the study ID in the scope when a patient should receive study-specific aliases. The same alias or initial can refer to multiple people. Workers cache public catalog resources per profile. The JavaScript package exports subannotations separately.
