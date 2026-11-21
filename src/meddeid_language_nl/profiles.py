@@ -11,7 +11,7 @@ from .date_pseudonyms import birth_date_variants, date_replacement
 from .identity import PROFILE_IDS, normalize_profile_id
 from .lookups import lookup_categories, lookup_manifest, lookup_values
 from .postprocess import post_process_spans
-from .name_pseudonyms import name_replacement
+from .name_pseudonyms import name_replacement, protect_boundaries
 
 
 def _profile(profile_id: str) -> LanguageProfile:
@@ -25,6 +25,7 @@ def _profile(profile_id: str) -> LanguageProfile:
         capability_manifest_provider=partial(capability_manifest, profile_id),
         date_replacement_provider=date_replacement,
         birth_date_variants_provider=birth_date_variants,
+        name_boundary_provider=partial(protect_boundaries, profile_id=profile_id),
         name_replacement_provider=partial(name_replacement, profile_id=profile_id),
     )
 

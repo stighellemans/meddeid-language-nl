@@ -55,17 +55,32 @@ def test_title_initials_and_label_fallback(profile):
     assert long_initials is not None and len(long_initials) == 162
 
 
-@pytest.mark.parametrize(
-    "source,expected",
-    [
-        ("Mark Peters", "[Sue-Ann Colen]"),
-        ("M. Peters", "[B. Altuntas]"),
-        ("Mark P.", "[Maïssara H.]"),
-        ("Dr. Peters", "[Dr. Skyla]"),
-        ("Anna Jacobs", "[Thorwald De Ridder]"),
-        ("Zoë Verhulst", "[Hayke Leenaerts]"),
-        ("dr. Linde", "[dr. Fljorim]"),
-    ],
-)
-def test_uza_v1_output_is_unchanged(source, expected):
-    assert alias(source) == expected
+
+def test_component_v2_vector():
+    assert alias("Marc Jan Peters") == "[Hoang Oceana Verlaine]"
+
+
+@pytest.mark.parametrize("profile", PROFILES)
+def test_shared_components_and_initials(profile):
+    render = lambda value: alias(value, profile)[1:-1]
+    marc, peters = render("Marc Peters").split()
+    middle = render("Marc Jan Peters").split()[1]
+    assert render("Marc Jacobs").split()[0] == render("Marc") == marc
+    assert render("Peters") == peters
+    assert render("Marie Peters").split()[-1] == peters
+    assert render("Marc P.") == f"{marc} {peters[0]}."
+    assert render("M. Peters") == f"{marc[0]}. {peters}"
+    assert render("Marc J. Peters") == f"{marc} {middle[0]}. {peters}"
+    assert render("Marc Jan") == f"{marc} {middle}"
+    assert render("Peters, Marc Jan") == f"{peters}, {marc} {middle}"
+    assert render("Dr. Marc P.") == f"Dr. {marc} {peters[0]}."
+    assert render("M.J. Peters") == f"{marc[0]}.{middle[0]}. {peters}"
+    assert render("Jean-Luc Peters").split()[0] == render("Jean") + "-" + render("Luc")
+
+
+@pytest.mark.parametrize("family", ["van der Meer", "García López", "De Smet-Janssens", "D’Haene"])
+def test_multiword_surnames_keep_components_in_all_orders(family):
+    given = alias("Marc")[1:-1]
+    surname = alias(family)[1:-1]
+    assert alias(f"Marc Jan {family}").endswith(" " + surname + "]")
+    assert alias(f"{family}, Marc") == f"[{surname}, {given}]"
